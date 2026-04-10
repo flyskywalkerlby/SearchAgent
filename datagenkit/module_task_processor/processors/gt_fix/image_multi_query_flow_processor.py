@@ -94,10 +94,19 @@ class ImageMultiQueryFlowProcessor(FlowTaskProcessor):
         if not text:
             return False, "输出为空", None
 
+        if text.startswith("```") or "```json" in text or "\n```" in text:
+            return False, (
+                "输出不能使用 markdown 代码块包裹。"
+                "不要输出 ```json 或 ```，请直接输出 JSON 对象本体。"
+            ), None
+
         try:
             obj = json.loads(text)
         except json.JSONDecodeError as e:
-            return False, f"JSON解析错误: {e}", None
+            return False, (
+                f"JSON解析错误: {e}。"
+                "请直接输出 JSON 对象本体，不要添加 ```json 代码块、解释文字或其它前后缀。"
+            ), None
 
         if not isinstance(obj, dict):
             return False, f"输出必须是 dict，实际是 {type(obj).__name__}", None
