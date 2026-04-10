@@ -1,0 +1,12 @@
+{
+    "face_caption_hq_zh_internvl3-38m_2.3m": {
+        "root": "/srv/workspace/Kirin_AI_DataLake/Dataset/Opensource_dataset/FaceCaptionHQ-4M/images/",
+        "annotation": "/srv/workspace/Kirin_AI_Workspace/TMG_II/l00931199/projects/Captioner/internvl_chat/data/playground/playground_v4_250920/Caption/FacecaptionHQ_zh_internvl3-38b.jsonl",
+        "data_augment": true,
+        "repeat_time": 1,
+        "length": 2319867,
+        "class": "Caption",
+        "language": "zh",
+        "old_annotation": "/srv/workspace/Kirin_AI_Workspace/TMG_II/l00931199/datasets/FaceCaptionHQ-4M/FacecaptionHQ_zh_internvl3-38b.jsonl"
+      }
+}

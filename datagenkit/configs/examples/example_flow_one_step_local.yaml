@@ -1,0 +1,27 @@
+input:
+  input_type: root
+  root: ./module_input_loaders/examples/images
+  dataset_name: example_flow_one_step
+  sample_n_per_ds: 1
+
+prompt:
+  dir_prompts: ./prompts/examples/
+  prompt_type: flow_examples
+  prompt_key: prompt_one_step
+
+model:
+  backend: local
+  local_entry: module_task_processor.processors.examples.local_example_entry:example_local_entry
+  model_name: example-local
+  model_tag: example-local
+
+task_processor:
+  task_processor_module: ./module_task_processor/processors/examples/example_flow_processor.py
+  task_processor_name: OneStepFlowExampleProcessor
+
+runtime:
+  max_concurrent: 1
+  rerun: true
+
+output:
+  output_dir: outputs/examples/flow_one_step

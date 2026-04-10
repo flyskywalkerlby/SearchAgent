@@ -1,0 +1,27 @@
+prompt_one_step: |-
+  EXAMPLE_ONE_STEP
+  CASE=one_step
+
+prompt_multi_step1: |-
+  EXAMPLE_MULTI_STEP1
+  CASE=multi_step
+
+prompt_multi_step2: |-
+  EXAMPLE_MULTI_STEP2
+  SEED={{SEED}}
+
+prompt_multi_step3: |-
+  EXAMPLE_MULTI_STEP3
+  MESSAGE={{MESSAGE}}
+
+prompt_split_step1: |-
+  EXAMPLE_SPLIT_STEP1
+  CASE=split_step
+
+prompt_split_item: |-
+  EXAMPLE_SPLIT_ITEM
+  ITEM={{ITEM}}
+
+prompt_split_final: |-
+  EXAMPLE_SPLIT_FINAL
+  MERGED={{MERGED}}

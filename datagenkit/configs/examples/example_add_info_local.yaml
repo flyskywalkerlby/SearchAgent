@@ -1,0 +1,28 @@
+input:
+  input_type: path2info_json
+  json_path: ./module_input_loaders/examples/path2info_sample.json
+  dataset_name: example_add_info
+  sample_n_per_ds: 1
+
+prompt:
+  dir_prompts: ./prompts/examples/
+  prompt_type: caption_flow
+  prompt_key: prompt_add_info_caption
+  add_info: true
+
+model:
+  backend: local
+  local_entry: module_task_processor.processors.examples.local_example_entry:example_local_entry
+  model_name: example-local
+  model_tag: example-local
+
+task_processor:
+  task_processor_module: ./module_task_processor/processors/examples/example_flow_processor.py
+  task_processor_name: AddInfoCaptionFlowProcessor
+
+runtime:
+  max_concurrent: 1
+  rerun: true
+
+output:
+  output_dir: outputs/examples/add_info_local

@@ -1,0 +1,10 @@
+prompt_simple_caption: |-
+  EXAMPLE_SIMPLE_CAPTION
+  请输出 JSON，格式为：
+  {"caption":"一句中文描述"}
+
+prompt_add_info_caption: |-
+  EXAMPLE_ADD_INFO_CAPTION
+  请输出 JSON，格式为：
+  {"caption":"一句中文描述"}
+  {{EXTRA_INFO_BLOCK}}

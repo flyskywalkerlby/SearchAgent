@@ -1,0 +1,22 @@
+{
+    "share-captioner_coco_118k_filter_by_clip": {
+      "root": "/srv/workspace/Kirin_AI_Workspace/TMG_II/l00931199/datasets/coco",
+      "annotation": "/srv/workspace/Kirin_AI_Workspace/TMG_II/l00931199/projects/Captioner/internvl_chat/data/playground/playground_v4_250920/Caption/share-captioner_coco_118k_filter_by_clip.jsonl",
+      "data_augment": true,
+      "repeat_time": 1,
+      "length": 109433,
+      "class": "Caption",
+      "language": "en",
+      "old_annotation": "/srv/workspace/Kirin_AI_Workspace/TMG_II/l00931199/datasets/scripts/filter_caption_by_clip/playground/filter_by_clip/share-captioner_coco_118k_filter_by_clip.jsonl"
+    },
+    "ALLaVA-Caption-LAION-4V_existing_images_filter_non_zh_en_43k_filter_by_clip": {
+      "root": "/srv/workspace/Kirin_AI_Workspace/TMG_II/l00931199/datasets/ALLaVA-4V",
+      "annotation": "/srv/workspace/Kirin_AI_Workspace/TMG_II/l00931199/projects/Captioner/internvl_chat/data/playground/playground_v4_250920/Caption/ALLaVA-Caption-LAION-4V_existing_images_filter_non_zh_en_43k_filter_by_clip.jsonl",
+      "data_augment": true,
+      "repeat_time": 1,
+      "length": 41533,
+      "class": "Caption",
+      "language": "en",
+      "old_annotation": "/srv/workspace/Kirin_AI_Workspace/TMG_II/l00931199/datasets/scripts/filter_caption_by_clip/playground/filter_by_clip/ALLaVA-Caption-LAION-4V_existing_images_filter_non_zh_en_43k_filter_by_clip.jsonl"
+    }
+}

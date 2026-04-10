@@ -1,0 +1,6 @@
+{
+  "example_meta": {
+    "annotation": "./module_input_loaders/examples/meta_annotation.jsonl",
+    "root": "./module_input_loaders/examples/images"
+  }
+}

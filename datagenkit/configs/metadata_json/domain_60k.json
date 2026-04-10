@@ -1,0 +1,134 @@
+{
+    "cat-v3_general": {
+        "root": "/srv/workspace/Kirin_AI_Workspace/TMG_II/s00913809/projects/multi-modal/data/image-caption",
+        "annotation": "/srv/workspace/Kirin_AI_Workspace/TMG_II/l00931199/projects/Captioner/internvl_chat/data/playground/playground_v4_250920/caption_special/cat-v3_general_38b_instruct.jsonl",
+        "data_augment": false,
+        "repeat_time": 1,
+        "length": 4768
+    },
+    "dog-v3_general": {
+        "root": "/srv/workspace/Kirin_AI_Workspace/TMG_II/s00913809/projects/multi-modal/data/image-caption",
+        "annotation": "/srv/workspace/Kirin_AI_Workspace/TMG_II/l00931199/projects/Captioner/internvl_chat/data/playground/playground_v4_250920/caption_special/dog-v3_general_38b_instruct.jsonl",
+        "data_augment": false,
+        "repeat_time": 1,
+        "length": 6600
+    },
+    "food-v1_general": {
+        "root": "/srv/workspace/Kirin_AI_Workspace/TMG_II/s00913809/projects/multi-modal/data/image-caption",
+        "annotation": "/srv/workspace/Kirin_AI_Workspace/TMG_II/l00931199/projects/Captioner/internvl_chat/data/playground/playground_v4_250920/caption_special/food-v1_general_38b_general.jsonl",
+        "data_augment": false,
+        "repeat_time": 1,
+        "length": 3400
+    },
+    "concert-v1_general_general_objective_internvl3_38b_do_sample_True": {
+        "root": "/srv/workspace/Kirin_AI_Workspace/TMG_II/s00913809/projects/multi-modal/data/image-caption",
+        "annotation": "/srv/workspace/Kirin_AI_Workspace/TMG_II/s00913809/projects/multi-modal/data/image-caption/work_dirs/sft_data_1030/concert-v1_general_general_objective_internvl3_38b_do_sample_True.jsonl",
+        "data_augment": false,
+        "repeat_time": 1,
+        "length": 399
+    },
+    "dibiaojianzhu-v1_general": {
+        "root": "/srv/workspace/Kirin_AI_Workspace/TMG_II/s00913809/projects/multi-modal/data/image-caption",
+        "annotation": "/srv/workspace/Kirin_AI_Workspace/TMG_II/l00931199/projects/Captioner/internvl_chat/data/playground/playground_v4_250920/caption_special/dibiaojianzhu-v1_general_38b_general.jsonl",
+        "data_augment": false,
+        "repeat_time": 1,
+        "length": 2876
+    },
+    "difangtesemeishi-v1_general": {
+        "root": "/srv/workspace/Kirin_AI_Workspace/TMG_II/s00913809/projects/multi-modal/data/image-caption",
+        "annotation": "/srv/workspace/Kirin_AI_Workspace/TMG_II/l00931199/projects/Captioner/internvl_chat/data/playground/playground_v4_250920/caption_special/difangtesemeishi-v1_general_38b_general.jsonl",
+        "data_augment": false,
+        "repeat_time": 1,
+        "length": 1271
+    },
+    "hunli-v1_general_general_objective_internvl3_38b_do_sample_True": {
+        "root": "/srv/workspace/Kirin_AI_Workspace/TMG_II/s00913809/projects/multi-modal/data/image-caption",
+        "annotation": "/srv/workspace/Kirin_AI_Workspace/TMG_II/s00913809/projects/multi-modal/data/image-caption/work_dirs/sft_data_1030/hunli-v1_general_general_objective_internvl3_38b_do_sample_True.jsonl",
+        "data_augment": false,
+        "repeat_time": 1,
+        "length": 2205
+    },
+    "qinzi-v1_general_general_objective_internvl3_38b_do_sample_True": {
+        "root": "/srv/workspace/Kirin_AI_Workspace/TMG_II/s00913809/projects/multi-modal/data/image-caption",
+        "annotation": "/srv/workspace/Kirin_AI_Workspace/TMG_II/s00913809/projects/multi-modal/data/image-caption/work_dirs/sft_data_1030/qinzi-v1_general_general_objective_internvl3_38b_do_sample_True.jsonl",
+        "data_augment": false,
+        "repeat_time": 1,
+        "length": 486
+    },
+    "renxiang-v1_general_general_objective_internvl3_38b_do_sample_True": {
+        "root": "/srv/workspace/Kirin_AI_Workspace/TMG_II/s00913809/projects/multi-modal/data/image-caption",
+        "annotation": "/srv/workspace/Kirin_AI_Workspace/TMG_II/s00913809/projects/multi-modal/data/image-caption/work_dirs/sft_data_1030/renxiang-v1_general_general_objective_internvl3_38b_do_sample_True.jsonl",
+        "data_augment": false,
+        "repeat_time": 1,
+        "length": 1582
+    },
+    "shengri-v1_general_general_objective_internvl3_38b_do_sample_True": {
+        "root": "/srv/workspace/Kirin_AI_Workspace/TMG_II/s00913809/projects/multi-modal/data/image-caption",
+        "annotation": "/srv/workspace/Kirin_AI_Workspace/TMG_II/s00913809/projects/multi-modal/data/image-caption/work_dirs/sft_data_1030/shengri-v1_general_general_objective_internvl3_38b_do_sample_True.jsonl",
+        "data_augment": false,
+        "repeat_time": 1,
+        "length": 1390
+    },
+    "xhs-v1_general": {
+        "root": "/srv/workspace/Kirin_AI_Workspace/TMG_II/s00913809/projects/multi-modal/data/image-caption",
+        "annotation": "/srv/workspace/Kirin_AI_Workspace/TMG_II/l00931199/projects/Captioner/internvl_chat/data/playground/playground_v4_250920/caption_special/xhs-v1_general_38b_general_human_bullet.jsonl",
+        "data_augment": false,
+        "repeat_time": 1,
+        "length": 1073
+    },
+    "zhongguochuantongjieri-v1_general": {
+        "root": "/srv/workspace/Kirin_AI_Workspace/TMG_II/s00913809/projects/multi-modal/data/image-caption",
+        "annotation": "/srv/workspace/Kirin_AI_Workspace/TMG_II/l00931199/projects/Captioner/internvl_chat/data/playground/playground_v4_250920/caption_special/zhongguochuantongjieri-v1_general_38b_general.jsonl",
+        "data_augment": false,
+        "repeat_time": 1,
+        "length": 2660
+    },
+    "zhongguochuantongyuansu-v1_general": {
+        "root": "/srv/workspace/Kirin_AI_Workspace/TMG_II/s00913809/projects/multi-modal/data/image-caption",
+        "annotation": "/srv/workspace/Kirin_AI_Workspace/TMG_II/l00931199/projects/Captioner/internvl_chat/data/playground/playground_v4_250920/caption_special/zhongguochuantongyuansu-v1_general_38b_general.jsonl",
+        "data_augment": false,
+        "repeat_time": 1,
+        "length": 2016
+    },
+    "sports_image_classification_train_general_objective_internvl3_38b_do_sample_True": {
+        "root": "/srv/workspace/Kirin_AI_Workspace/TMG_II/s00913809/projects/multi-modal/data/image-caption",
+        "annotation": "/srv/workspace/Kirin_AI_Workspace/TMG_II/s00913809/projects/multi-modal/data/image-caption/work_dirs/sft_data_1030/sports_image_classification_train_general_objective_internvl3_38b_do_sample_True.jsonl",
+        "data_augment": false,
+        "repeat_time": 1,
+        "length": 8227
+    },
+    "chunlian-v1_general": {
+        "root": "/srv/workspace/Kirin_AI_Workspace/TMG_II/s00913809/projects/multi-modal/data/image-caption",
+        "annotation": "/srv/workspace/Kirin_AI_Workspace/TMG_II/l00931199/projects/Captioner/internvl_chat/data/playground/playground_v4_250920/caption_special/chunlian-v1_general_38b_general.jsonl",
+        "data_augment": false,
+        "repeat_time": 1,
+        "length": 1330
+    },
+    "human_1w_fix_rel_path_imgs_rename_general_objective_internvl3_5_38b_do_sample_True": {
+        "root": "/srv/workspace/Kirin_AI_Workspace/TMG_II/s00913809/datasets/multi-modal",
+        "annotation": "/srv/workspace/Kirin_AI_Workspace/TMG_II/s00913809/projects/multi-modal/data/image-caption/work_dirs/sft_data_1030/human_1w_fix_rel_path_imgs_rename_general_objective_internvl3_5_38b_do_sample_True.jsonl",
+        "data_augment": false,
+        "repeat_time": 1,
+        "length": 10150
+    },
+    "eaten_1500": {
+        "root": "/srv/workspace/Kirin_AI_Workspace/TMG_II/l00931199/datasets/EATEN",
+        "annotation": "/srv/workspace/Kirin_AI_Workspace/TMG_II/l00931199/projects/Captioner/internvl_chat/data/playground/playground_v4_250920/卡证/eaten_train_conversations_1500.jsonl",
+        "data_augment": true,
+        "repeat_time": 1,
+        "length": 1500,
+        "class": "卡证",
+        "language": "zh",
+        "old_annotation": "/srv/workspace/Kirin_AI_Workspace/TMG_II/l00931199/datasets/EATEN/eaten_train_conversations_1500.jsonl"
+      },
+    "card_aic_8k": {
+      "root": "/srv/workspace/Kirin_AI_Workspace/TMG_II/l00931199/datasets/card_privacy/",
+      "annotation": "/srv/workspace/Kirin_AI_Workspace/TMG_II/l00931199/projects/Captioner/internvl_chat/data/playground/playground_v4_250920/卡证/CARD_AIC_250904.jsonl",
+      "data_augment": true,
+      "repeat_time": 1,
+      "length": 8282,
+      "class": "卡证",
+      "language": "zh",
+      "old_annotation": "/srv/workspace/Kirin_AI_Workspace/TMG_II/l00931199/datasets/card_privacy/CARD_AIC_250904.jsonl"
+    }
+}

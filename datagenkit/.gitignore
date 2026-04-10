@@ -1,0 +1,111 @@
+# ===============================
+# Python 编译与缓存
+# ===============================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# ===============================
+# 虚拟环境
+# ===============================
+venv/
+.venv/
+env/
+ENV/
+virtualenv/
+.conda/
+
+# ===============================
+# 打包 / 构建产物
+# ===============================
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# ===============================
+# 测试 & 覆盖率
+# ===============================
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+
+# ===============================
+# 日志 & 临时文件
+# ===============================
+*.log
+*.tmp
+*.bak
+*.swp
+
+# ===============================
+# IDE / 编辑器
+# ===============================
+.vscode/
+.idea/
+*.iml
+
+# ===============================
+# 操作系统文件
+# ===============================
+.DS_Store
+Thumbs.db
+
+# ===============================
+# Jupyter Notebook
+# ===============================
+.ipynb_checkpoints/
+
+# ===============================
+# 环境变量 / 配置
+# ===============================
+.env
+.env.*
+
+# ===============================
+# 缓存、TEMP
+# ===============================
+cache
+
+# ===============================
+# 数据
+# ===============================
+outputs
+outputs_steps
+outputs_failed
+test_outputs
+test_outputs_steps
+test_outputs_failed
+datasets_sharegpt
+
+# ====== temp =======
+# visual 缓存
+temp/
+
+# ====== tasks ========
+tasks/*
+!tasks/examples
+logs/*
+!logs/examples
+
+# # ====== configs =======
+# configs/*
+# !configs/examples
+
+# # ====== prompts ======
+# prompts/*
+# !prompts/examples
+
+# # ====== pools ========
+
+# # 忽略所有自定义 pool
+# pool_gather_jsonl_to_json_meta/*
+# !pool_gather_jsonl_to_json_meta/examples
+
+# # ======= processors =====
+# module_task_processor/processors/*
+# !module_task_processor/processors/examples

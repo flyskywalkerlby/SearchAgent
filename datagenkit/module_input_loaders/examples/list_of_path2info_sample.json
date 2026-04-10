@@ -1,0 +1,12 @@
+{
+  "example_path2info_list": {
+    "length": 1,
+    "json": "./module_input_loaders/examples/path2info_sample.json",
+    "skip": false
+  },
+  "example_path2info_skip": {
+    "length": 1,
+    "json": "./module_input_loaders/examples/path2info_sample.json",
+    "skip": true
+  }
+}

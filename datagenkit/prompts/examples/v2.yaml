@@ -1,0 +1,4 @@
+prompt_simple_caption: |-
+  EXAMPLE_SIMPLE_CAPTION
+  请输出 JSON，格式为：
+  {"caption":"一句更自然、更完整的中文描述"}

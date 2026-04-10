@@ -1,0 +1,17 @@
+# python=3.12
+
+# ========= vLLM =========
+vllm
+aiofiles # 25.1.0
+
+# core
+aiohttp
+openai
+Pillow
+PyYAML
+
+# utils
+colorful
+jsonlines
+
+streamlit
