@@ -29,6 +29,7 @@ task_processor:
 
 runtime:
   max_concurrent: 8
+  log_every: 10
   max_retry: 3
   do_sample: false
 
