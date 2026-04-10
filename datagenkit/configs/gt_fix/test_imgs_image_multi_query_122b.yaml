@@ -1,6 +1,8 @@
 input:
-  input_type: jsonl
-  jsonl_path: /path/to/test_imgs_images.jsonl
+  input_type: gt_jsonl
+  gt_jsonl_path: ../gt_optimization/gt/test_imgs_rename_20251209_q2i_supplement_removelowSim_0.2.jsonl
+  root: /srv/workspace/Kirin_AI_Workspace/TMG_II/s00913809/projects/multi-modal/data/image-caption/test/caption_1k/test_imgs_rename
+  dataset_name: test_imgs_gt_fix
 
 prompt:
   dir_prompts: ./prompts/gt_fix

@@ -1,6 +1,8 @@
 input:
-  input_type: jsonl
-  jsonl_path: /path/to/card_images.jsonl
+  input_type: gt_jsonl
+  gt_jsonl_path: ../gt_optimization/gt/card_20251218_q2i_manucheck.jsonl
+  root: /srv/workspace/Kirin_AI_Workspace/TMG_II/l00931199/datasets/card_privacy/
+  dataset_name: card_gt_fix
 
 prompt:
   dir_prompts: ./prompts/gt_fix

@@ -4,6 +4,7 @@ from .input_loaders.load_from_jsonl import load_from_jsonl
 from .input_loaders.load_from_jsonl_dir import load_from_jsonl_dir
 from .input_loaders.load_from_path2info_json import load_from_path2info_json
 from .input_loaders.load_from_list_of_path2info_json import load_from_list_of_path2info_json
+from .input_loaders.load_from_gt_jsonl import load_from_gt_jsonl
 
 def load_input_data(cfg: dict):
     if cfg["input_type"] == "root":
@@ -19,6 +20,14 @@ def load_input_data(cfg: dict):
         return load_from_jsonl(
             cfg["jsonl_path"],
             cfg["sample_n_per_ds"]
+        )
+
+    if cfg["input_type"] == "gt_jsonl":
+        assert cfg["gt_jsonl_path"] and cfg["root"] and cfg["dataset_name"], "gt_jsonl 模式需要 --gt_jsonl_path --root --dataset_name"
+        return load_from_gt_jsonl(
+            cfg["gt_jsonl_path"],
+            cfg["root"],
+            cfg["dataset_name"],
         )
 
     if cfg["input_type"] == "jsonl_dir":
