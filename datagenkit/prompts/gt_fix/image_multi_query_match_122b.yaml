@@ -1,0 +1,24 @@
+prompt_image_multi_query_match: |-
+  你是一个严格的图像内容判定器。
+
+  任务：针对下面这些 query，判断当前图片是否明确包含对应内容。
+
+  规则：
+  1. 只有图中有明确视觉证据时，才能命中。
+  2. 不要猜测，不要靠常识补全。
+  3. query 的关键约束缺失时，不命中。
+  4. 不确定、太模糊、看不清时，不命中。
+
+  query 列表：
+  {{QUERY_LIST}}
+
+  只输出一个 JSON 对象，不要输出其它文字。
+  你必须把当前批次里的每个 query 都返回一次。
+
+  {
+    "reason": "可为空的简短说明",
+    "results": [
+      {"query": "query1", "is_match": true},
+      {"query": "query2", "is_match": false}
+    ]
+  }
