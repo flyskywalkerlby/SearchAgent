@@ -20,6 +20,21 @@ def _format_progress_bar(current: int, total: int, width: int = 20) -> str:
     return "[{}{}]".format("#" * filled, "-" * (width - filled))
 
 
+def _strip_json_fence(text: str) -> tuple[str, bool]:
+    stripped = text.strip()
+    if not stripped.startswith("```"):
+        return stripped, False
+
+    lines = stripped.splitlines()
+    if len(lines) < 3:
+        return stripped, False
+    if not lines[0].startswith("```") or lines[-1].strip() != "```":
+        return stripped, False
+
+    inner = "\n".join(lines[1:-1]).strip()
+    return inner, True
+
+
 class ImageMultiQueryFlowProcessor(FlowTaskProcessor):
     def __init__(self, cfg):
         super().__init__(cfg)
@@ -116,11 +131,11 @@ class ImageMultiQueryFlowProcessor(FlowTaskProcessor):
         if not text:
             return False, "输出为空", None
 
-        if text.startswith("```") or "```json" in text or "\n```" in text:
-            return False, (
-                "输出不能使用 markdown 代码块包裹。"
-                "不要输出 ```json 或 ```，请直接输出 JSON 对象本体。"
-            ), None
+        text, fenced = _strip_json_fence(text)
+        if fenced:
+            print(cf.yellow(
+                "WARN: 输出使用了 markdown 代码块包裹，已自动去掉 ```json / ``` 后继续解析。"
+            ))
 
         try:
             obj = json.loads(text)
@@ -133,6 +148,10 @@ class ImageMultiQueryFlowProcessor(FlowTaskProcessor):
         if not isinstance(obj, dict):
             return False, f"输出必须是 dict，实际是 {type(obj).__name__}", None
 
+        allowed_top_level_keys = {"reason", "results"}
+        extra_top_level_keys = set(obj.keys()) - allowed_top_level_keys
+        if extra_top_level_keys:
+            return False, f"顶层存在未定义字段: {sorted(extra_top_level_keys)}", None
         if "results" not in obj:
             return False, "缺少 results", None
 
@@ -148,6 +167,10 @@ class ImageMultiQueryFlowProcessor(FlowTaskProcessor):
         for item in results:
             if not isinstance(item, dict):
                 return False, f"results 元素必须是 dict，实际是 {type(item).__name__}", None
+            allowed_item_keys = {"query", "is_match"}
+            extra_item_keys = set(item.keys()) - allowed_item_keys
+            if extra_item_keys:
+                return False, f"results 元素存在未定义字段: {sorted(extra_item_keys)}", None
             if "query" not in item or "is_match" not in item:
                 return False, "results 元素缺少 query 或 is_match", None
 
