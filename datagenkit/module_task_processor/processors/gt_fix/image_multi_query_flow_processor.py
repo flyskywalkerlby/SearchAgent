@@ -3,11 +3,21 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import colorful as cf
+
 from module_task_processor.task_processor import FlowTaskProcessor
 
 
 def _chunk_list(items: list[str], chunk_size: int) -> list[list[str]]:
     return [items[i:i + chunk_size] for i in range(0, len(items), chunk_size)]
+
+
+def _format_progress_bar(current: int, total: int, width: int = 20) -> str:
+    if total <= 0:
+        return "[{}]".format("-" * width)
+    filled = int(width * current / total)
+    filled = min(width, max(0, filled))
+    return "[{}{}]".format("#" * filled, "-" * (width - filled))
 
 
 class ImageMultiQueryFlowProcessor(FlowTaskProcessor):
@@ -75,6 +85,18 @@ class ImageMultiQueryFlowProcessor(FlowTaskProcessor):
             return None
 
         batch_queries = query_batches[batch_idx]
+        total_batches = len(query_batches)
+        current_batch = batch_idx + 1
+        if current_batch == 1 or current_batch % 10 == 0 or current_batch == total_batches:
+            progress_bar = _format_progress_bar(current_batch, total_batches)
+            print(
+                cf.cyan(
+                    f"{progress_bar} "
+                    f"image={data.get('image')} "
+                    f"batch={current_batch}/{total_batches} "
+                    f"queries={len(batch_queries)}"
+                )
+            )
         numbered_lines = [
             f"- {query}"
             for query in batch_queries
