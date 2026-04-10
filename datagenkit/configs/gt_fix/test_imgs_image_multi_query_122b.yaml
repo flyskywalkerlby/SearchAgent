@@ -10,10 +10,18 @@ prompt:
   prompt_key: prompt_image_multi_query_match
 
 model:
-  backend: http
-  api_url: http://localhost:9002/v1/chat/completions
-  model_name: qwen3_vl_122b
-  model_tag: 122b
+  backend: openai
+  api_url: http://localhost:8000/v1
+  api_key: EMPTY
+  model_name: qwen3.5-122b-a10b
+  model_tag: qwen35_122b_a10b
+  temperature: 1.0
+  top_p: 0.95
+  presence_penalty: 1.5
+  extra_body:
+    chat_template_kwargs:
+      enable_thinking: false
+    top_k: 20
 
 task_processor:
   task_processor_module: ./module_task_processor/processors/gt_fix/image_multi_query_flow_processor.py
