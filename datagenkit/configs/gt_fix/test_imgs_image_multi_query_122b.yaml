@@ -31,8 +31,6 @@ runtime:
   max_concurrent: 8
   max_retry: 3
   do_sample: false
-  rerun: false
-  resume: true
 
 output:
   output_dir: outputs/gt_fix/test_imgs_image_multi_query_122b
