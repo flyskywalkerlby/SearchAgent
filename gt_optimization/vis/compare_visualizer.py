@@ -285,12 +285,18 @@ with top_cols[1]:
     render_query_block(f"Old: {old_label}", old_queries)
     for item in new_data:
         st.divider()
+        present_in_new = image_id in item["map"]
         new_queries = item["map"].get(image_id, [])
         old_set = set(old_queries)
         new_set = set(new_queries)
-        keep = sorted(old_set & new_set)
-        add = sorted(new_set - old_set)
-        delete = sorted(old_set - new_set)
+        if present_in_new:
+            keep = sorted(old_set & new_set)
+            add = sorted(new_set - old_set)
+            delete = sorted(old_set - new_set)
+        else:
+            keep = []
+            add = []
+            delete = []
 
         render_query_block(f"New: {item['label']}", new_queries)
         diff_cols = st.columns([1, 1, 1])
@@ -300,4 +306,7 @@ with top_cols[1]:
             render_query_block("Add", add)
         with diff_cols[2]:
             render_query_block("Delete", delete)
-        st.caption(f"present_in_new: {'yes' if image_id in item['map'] else 'no'}")
+        if present_in_new:
+            st.caption("状态：new 中存在该图片")
+        else:
+            st.warning("状态：new 中不存在该图片，可能还没处理到，或者处理失败")
