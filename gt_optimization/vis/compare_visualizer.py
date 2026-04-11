@@ -283,23 +283,21 @@ with top_cols[0]:
 
 with top_cols[1]:
     render_query_block(f"Old: {old_label}", old_queries)
+    for item in new_data:
+        st.divider()
+        new_queries = item["map"].get(image_id, [])
+        old_set = set(old_queries)
+        new_set = set(new_queries)
+        keep = sorted(old_set & new_set)
+        add = sorted(new_set - old_set)
+        delete = sorted(old_set - new_set)
 
-for item in new_data:
-    st.divider()
-    new_queries = item["map"].get(image_id, [])
-    old_set = set(old_queries)
-    new_set = set(new_queries)
-    keep = sorted(old_set & new_set)
-    add = sorted(new_set - old_set)
-    delete = sorted(old_set - new_set)
-
-    row_cols = st.columns([1, 1, 1, 1])
-    with row_cols[0]:
         render_query_block(f"New: {item['label']}", new_queries)
-    with row_cols[1]:
-        render_query_block("Keep", keep)
-    with row_cols[2]:
-        render_query_block("Add", add)
-    with row_cols[3]:
-        render_query_block("Delete", delete)
-    st.caption(f"present_in_new: {'yes' if image_id in item['map'] else 'no'}")
+        diff_cols = st.columns([1, 1, 1])
+        with diff_cols[0]:
+            render_query_block("Keep", keep)
+        with diff_cols[1]:
+            render_query_block("Add", add)
+        with diff_cols[2]:
+            render_query_block("Delete", delete)
+        st.caption(f"present_in_new: {'yes' if image_id in item['map'] else 'no'}")
