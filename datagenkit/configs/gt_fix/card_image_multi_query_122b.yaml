@@ -1,7 +1,7 @@
 input:
   input_type: gt_jsonl
   gt_jsonl_path: ../gt_optimization/gt/card_20251218_q2i_manucheck.jsonl
-  root: /srv/workspace/Kirin_AI_Workspace/TMG_II/l00931199/datasets/card_privacy/
+  root: /srv/workspace/Kirin_AI_Workspace/AIC_I/g30064845/VLM/Chinese-CLIP/datasets/from_tuku_test_3k_together/card
   dataset_name: card_gt_fix
 
 prompt:

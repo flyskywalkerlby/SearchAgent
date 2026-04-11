@@ -4,7 +4,10 @@ import os
 
 st.set_page_config(layout="wide")
 
-BASE_DIR = "/srv/workspace/Kirin_AI_Workspace/TMG_II/s00913809/projects/multi-modal/data/image-caption/test/caption_1k/test_imgs_rename"
+ROOT_BY_JSONL = {
+    "card_20251218_q2i_manucheck.jsonl": "/srv/workspace/Kirin_AI_Workspace/AIC_I/g30064845/VLM/Chinese-CLIP/datasets/from_tuku_test_3k_together/card",
+    "test_imgs_rename_20251209_q2i_supplement_removelowSim_0.2.jsonl": "/srv/workspace/Kirin_AI_Workspace/TMG_II/s00913809/projects/multi-modal/data/image-caption/test/caption_1k/test_imgs_rename",
+}
 GT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "gt")
 
 st.title("JSONL Visualizer")
@@ -48,6 +51,7 @@ if "last_file" not in st.session_state:
     st.session_state.last_file = None
 
 if selected_file:
+    base_dir = ROOT_BY_JSONL.get(selected_file, "")
     file_path = os.path.join(GT_DIR, selected_file)
     data = load_jsonl(file_path)
     total = len(data)
@@ -117,7 +121,7 @@ if selected_file:
 
     cols = st.columns(4)
     for i, img_name in enumerate(images):
-        img_path = os.path.join(BASE_DIR, img_name)
+        img_path = os.path.join(base_dir, img_name)
         with cols[i % 4]:
             if os.path.exists(img_path):
                 st.image(img_path, caption=img_name, use_container_width=True)
