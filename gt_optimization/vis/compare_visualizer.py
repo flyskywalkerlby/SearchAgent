@@ -21,9 +21,9 @@ CACHE_DIR = WORKSPACE_DIR / "datagenkit" / "cache"
 st.title("JSONL Compare Visualizer")
 
 
-def collect_jsonl_files():
+def collect_jsonl_files(root_dirs):
     files = []
-    for root_dir in [GT_DIR, OUTPUTS_DIR, CACHE_DIR]:
+    for root_dir in root_dirs:
         if not root_dir.exists():
             continue
         for path in sorted(root_dir.rglob("*.jsonl")):
@@ -122,50 +122,56 @@ def render_query_block(title: str, queries: list[str]):
         st.caption("empty")
 
 
-all_files = collect_jsonl_files()
-file_options = {path_label(p): str(p) for p in all_files}
+old_files = collect_jsonl_files([GT_DIR])
+new_files = collect_jsonl_files([OUTPUTS_DIR, CACHE_DIR])
+old_options = {path_label(p): str(p) for p in old_files}
+new_options = {path_label(p): str(p) for p in new_files}
 
-if not file_options:
-    st.warning("没有找到可用 jsonl 文件")
+if not old_options:
+    st.warning("没有找到可用的 old jsonl 文件")
     st.stop()
 
-primary_label = st.selectbox("Primary JSONL", list(file_options.keys()))
-secondary_labels = st.multiselect(
-    "Secondary JSONLs",
-    [label for label in file_options.keys() if label != primary_label],
+if not new_options:
+    st.warning("没有找到可用的 new jsonl 文件")
+    st.stop()
+
+old_label = st.selectbox("Old JSONL", list(old_options.keys()))
+new_labels = st.multiselect(
+    "New JSONLs",
+    list(new_options.keys()),
 )
 
-primary_path = Path(file_options[primary_label])
-primary_map, primary_roots, primary_meta = cached_load(str(primary_path))
+old_path = Path(old_options[old_label])
+old_map, old_roots, old_meta = cached_load(str(old_path))
 
-secondary_data = []
-for label in secondary_labels:
-    path = Path(file_options[label])
-    sec_map, sec_roots, sec_meta = cached_load(str(path))
-    secondary_data.append({
+new_data = []
+for label in new_labels:
+    path = Path(new_options[label])
+    new_map, new_roots, new_meta = cached_load(str(path))
+    new_data.append({
         "label": label,
         "path": path,
-        "map": sec_map,
-        "roots": sec_roots,
-        "meta": sec_meta,
+        "map": new_map,
+        "roots": new_roots,
+        "meta": new_meta,
     })
 
 show_only_diff = st.checkbox("Only show images with diffs", value=False)
 image_filter = st.text_input("Filter image id contains", value="").strip().lower()
 
-image_ids = sorted(primary_map.keys())
+image_ids = sorted(old_map.keys())
 
 if image_filter:
     image_ids = [image for image in image_ids if image_filter in image.lower()]
 
-if show_only_diff and secondary_data:
+if show_only_diff and new_data:
     filtered = []
     for image in image_ids:
-        primary_queries = set(primary_map.get(image, []))
+        old_queries = set(old_map.get(image, []))
         keep_any_diff = False
-        for item in secondary_data:
-            secondary_queries = set(item["map"].get(image, []))
-            if primary_queries != secondary_queries:
+        for item in new_data:
+            new_queries = set(item["map"].get(image, []))
+            if old_queries != new_queries:
                 keep_any_diff = True
                 break
         if keep_any_diff:
@@ -173,16 +179,16 @@ if show_only_diff and secondary_data:
     image_ids = filtered
 
 st.caption(
-    f"Primary images: {len(primary_map)} | "
+    f"Old images: {len(old_map)} | "
     f"Visible images: {len(image_ids)} | "
-    f"Primary records: {primary_meta['records']} | skipped: {primary_meta['skipped']}"
+    f"Old records: {old_meta['records']} | skipped: {old_meta['skipped']}"
 )
 
-for item in secondary_data:
-    common = len(set(primary_map.keys()) & set(item["map"].keys()))
+for item in new_data:
+    common = len(set(old_map.keys()) & set(item["map"].keys()))
     st.caption(
-        f"Secondary: {item['label']} | images: {len(item['map'])} | "
-        f"common_with_primary: {common} | skipped: {item['meta']['skipped']}"
+        f"New: {item['label']} | images: {len(item['map'])} | "
+        f"common_with_old: {common} | skipped: {item['meta']['skipped']}"
     )
 
 if not image_ids:
@@ -195,8 +201,8 @@ if "compare_num_idx" not in st.session_state:
     st.session_state.compare_num_idx = 0
 if "compare_slider_idx" not in st.session_state:
     st.session_state.compare_slider_idx = 0
-if "compare_last_primary" not in st.session_state:
-    st.session_state.compare_last_primary = None
+if "compare_last_old" not in st.session_state:
+    st.session_state.compare_last_old = None
 
 
 def sync_widgets():
@@ -214,10 +220,10 @@ def set_idx_from_slider():
     st.session_state.compare_num_idx = st.session_state.compare_idx
 
 
-state_key = (primary_label, tuple(secondary_labels), show_only_diff, image_filter)
-if st.session_state.compare_last_primary != state_key:
+state_key = (old_label, tuple(new_labels), show_only_diff, image_filter)
+if st.session_state.compare_last_old != state_key:
     st.session_state.compare_idx = 0
-    st.session_state.compare_last_primary = state_key
+    st.session_state.compare_last_old = state_key
     sync_widgets()
 
 st.session_state.compare_idx = max(0, min(st.session_state.compare_idx, len(image_ids) - 1))
@@ -260,13 +266,13 @@ with nav_cols[4]:
     st.button("Next ▶", on_click=next_item)
 
 image_id = image_ids[st.session_state.compare_idx]
-primary_queries = primary_map.get(image_id, [])
-image_root = primary_roots.get(image_id, "")
+old_queries = old_map.get(image_id, [])
+image_root = old_roots.get(image_id, "")
 image_path = os.path.join(image_root, image_id) if image_root else image_id
 
 st.markdown(f"### Image: {image_id}")
 
-top_cols = st.columns([1.2, 1.8])
+top_cols = st.columns([1.1, 1.4])
 with top_cols[0]:
     if image_root and os.path.exists(image_path):
         st.image(image_path, caption=image_id, use_container_width=True)
@@ -276,30 +282,24 @@ with top_cols[0]:
             st.caption(image_root)
 
 with top_cols[1]:
-    render_query_block(f"Primary: {primary_label}", primary_queries)
+    render_query_block(f"Old: {old_label}", old_queries)
 
-if secondary_data:
-    compare_cols = st.columns(max(1, len(secondary_data)))
-    for idx, item in enumerate(secondary_data):
-        secondary_queries = item["map"].get(image_id, [])
-        primary_set = set(primary_queries)
-        secondary_set = set(secondary_queries)
-        keep = sorted(primary_set & secondary_set)
-        add = sorted(secondary_set - primary_set)
-        delete = sorted(primary_set - secondary_set)
+for item in new_data:
+    st.divider()
+    new_queries = item["map"].get(image_id, [])
+    old_set = set(old_queries)
+    new_set = set(new_queries)
+    keep = sorted(old_set & new_set)
+    add = sorted(new_set - old_set)
+    delete = sorted(old_set - new_set)
 
-        with compare_cols[idx]:
-            st.markdown(f"#### Compare: {item['label']}")
-            st.write(f"present: {'yes' if image_id in item['map'] else 'no'}")
-            st.write(f"keep={len(keep)} add={len(add)} delete={len(delete)}")
-            if keep:
-                st.caption("keep")
-                st.code("\n".join(keep), language="text")
-            if add:
-                st.caption("add")
-                st.code("\n".join(add), language="text")
-            if delete:
-                st.caption("delete")
-                st.code("\n".join(delete), language="text")
-            if not keep and not add and not delete:
-                st.caption("no diff")
+    row_cols = st.columns([1, 1, 1, 1])
+    with row_cols[0]:
+        render_query_block(f"New: {item['label']}", new_queries)
+    with row_cols[1]:
+        render_query_block("Keep", keep)
+    with row_cols[2]:
+        render_query_block("Add", add)
+    with row_cols[3]:
+        render_query_block("Delete", delete)
+    st.caption(f"present_in_new: {'yes' if image_id in item['map'] else 'no'}")
