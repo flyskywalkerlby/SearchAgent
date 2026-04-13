@@ -123,7 +123,7 @@ def render_query_block(title: str, queries: list[str]):
 
 
 
-def compute_diff_stats(old_map, new_map):
+def compute_diff_stats(old_map, new_map, visible_image_ids):
     old_images = set(old_map.keys())
     new_images = set(new_map.keys())
     common_images = old_images & new_images
@@ -162,6 +162,8 @@ def compute_diff_stats(old_map, new_map):
         "delete_image_count": len(delete_image_ids),
         "add_image_ids": add_image_ids,
         "delete_image_ids": delete_image_ids,
+        "add_image_idxs": [idx for idx, image in enumerate(visible_image_ids) if image in set(add_image_ids)],
+        "delete_image_idxs": [idx for idx, image in enumerate(visible_image_ids) if image in set(delete_image_ids)],
     }
 
 
@@ -238,7 +240,7 @@ for item in new_data:
 if show_overall_results and new_data:
     st.markdown("### Overall Results")
     for item in new_data:
-        stats = compute_diff_stats(old_map, item["map"])
+        stats = compute_diff_stats(old_map, item["map"], image_ids)
         st.markdown(f"#### New: {item['label']}")
         cols = st.columns(10)
         labels = [
@@ -255,8 +257,8 @@ if show_overall_results and new_data:
         ]
         for col, (key, label) in zip(cols, labels):
             col.metric(label, stats[key])
-        st.caption(f"Add 图片 ID: {stats['add_image_ids']}")
-        st.caption(f"Delete 图片 ID: {stats['delete_image_ids']}")
+        st.caption(f"Add 图片 idx: {stats['add_image_idxs']}")
+        st.caption(f"Delete 图片 idx: {stats['delete_image_idxs']}")
 
 if not image_ids:
     st.warning("没有可展示的图片")
