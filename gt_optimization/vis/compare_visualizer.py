@@ -122,6 +122,47 @@ def render_query_block(title: str, queries: list[str]):
         st.caption("empty")
 
 
+
+def compute_diff_stats(old_map, new_map):
+    old_images = set(old_map.keys())
+    new_images = set(new_map.keys())
+    common_images = old_images & new_images
+    missing_in_new_images = old_images - new_images
+    new_only_images = new_images - old_images
+
+    keep_pairs = 0
+    add_pairs = 0
+    delete_pairs = 0
+    add_image_count = 0
+    delete_image_count = 0
+
+    for image in common_images:
+        old_set = set(old_map.get(image, []))
+        new_set = set(new_map.get(image, []))
+        add_for_image = new_set - old_set
+        delete_for_image = old_set - new_set
+        keep_pairs += len(old_set & new_set)
+        add_pairs += len(add_for_image)
+        delete_pairs += len(delete_for_image)
+        if add_for_image:
+            add_image_count += 1
+        if delete_for_image:
+            delete_image_count += 1
+
+    return {
+        "old_images": len(old_images),
+        "new_images": len(new_images),
+        "common_images": len(common_images),
+        "missing_in_new_images": len(missing_in_new_images),
+        "new_only_images": len(new_only_images),
+        "keep_pairs": keep_pairs,
+        "add_pairs": add_pairs,
+        "delete_pairs": delete_pairs,
+        "add_image_count": add_image_count,
+        "delete_image_count": delete_image_count,
+    }
+
+
 old_files = collect_jsonl_files([GT_DIR])
 new_files = collect_jsonl_files([OUTPUTS_DIR, CACHE_DIR])
 old_options = {path_label(p): str(p) for p in old_files}
@@ -157,6 +198,7 @@ for label in new_labels:
     })
 
 show_only_diff = st.checkbox("Only show images with diffs", value=False)
+show_overall_results = st.checkbox("Show overall results", value=False)
 image_filter = st.text_input("Filter image id contains", value="").strip().lower()
 
 image_ids = sorted(old_map.keys())
@@ -190,6 +232,27 @@ for item in new_data:
         f"New: {item['label']} | images: {len(item['map'])} | "
         f"common_with_old: {common} | skipped: {item['meta']['skipped']}"
     )
+
+if show_overall_results and new_data:
+    st.markdown("### Overall Results")
+    for item in new_data:
+        stats = compute_diff_stats(old_map, item["map"])
+        st.markdown(f"#### New: {item['label']}")
+        cols = st.columns(10)
+        labels = [
+            ("old_images", "Old 图片"),
+            ("new_images", "New 图片"),
+            ("common_images", "共有图片"),
+            ("missing_in_new_images", "New 缺失图片"),
+            ("new_only_images", "New 独有图片"),
+            ("keep_pairs", "Keep"),
+            ("add_pairs", "Add"),
+            ("delete_pairs", "Delete"),
+            ("add_image_count", "Add 图片数"),
+            ("delete_image_count", "Delete 图片数"),
+        ]
+        for col, (key, label) in zip(cols, labels):
+            col.metric(label, stats[key])
 
 if not image_ids:
     st.warning("没有可展示的图片")
