@@ -133,10 +133,10 @@ def compute_diff_stats(old_map, new_map):
     keep_pairs = 0
     add_pairs = 0
     delete_pairs = 0
-    add_image_count = 0
-    delete_image_count = 0
+    add_image_ids = []
+    delete_image_ids = []
 
-    for image in common_images:
+    for image in sorted(common_images):
         old_set = set(old_map.get(image, []))
         new_set = set(new_map.get(image, []))
         add_for_image = new_set - old_set
@@ -145,9 +145,9 @@ def compute_diff_stats(old_map, new_map):
         add_pairs += len(add_for_image)
         delete_pairs += len(delete_for_image)
         if add_for_image:
-            add_image_count += 1
+            add_image_ids.append(image)
         if delete_for_image:
-            delete_image_count += 1
+            delete_image_ids.append(image)
 
     return {
         "old_images": len(old_images),
@@ -158,8 +158,10 @@ def compute_diff_stats(old_map, new_map):
         "keep_pairs": keep_pairs,
         "add_pairs": add_pairs,
         "delete_pairs": delete_pairs,
-        "add_image_count": add_image_count,
-        "delete_image_count": delete_image_count,
+        "add_image_count": len(add_image_ids),
+        "delete_image_count": len(delete_image_ids),
+        "add_image_ids": add_image_ids,
+        "delete_image_ids": delete_image_ids,
     }
 
 
@@ -253,6 +255,8 @@ if show_overall_results and new_data:
         ]
         for col, (key, label) in zip(cols, labels):
             col.metric(label, stats[key])
+        st.caption(f"Add 图片 ID: {stats['add_image_ids']}")
+        st.caption(f"Delete 图片 ID: {stats['delete_image_ids']}")
 
 if not image_ids:
     st.warning("没有可展示的图片")
