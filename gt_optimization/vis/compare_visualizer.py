@@ -46,6 +46,7 @@ def infer_root(path: Path, record: dict) -> str:
 
 def load_image_query_map(path: Path):
     image_to_queries = {}
+    image_to_query_results = {}
     image_to_root = {}
     image_order = []
     meta = {"records": 0, "skipped": 0, "kind": "unknown"}
@@ -100,17 +101,20 @@ def load_image_query_map(path: Path):
 
                     query_results = output.get("query_results")
                     if isinstance(image, str) and isinstance(query_results, dict):
-                        meta["kind"] = "image_to_queries"
+                        meta["kind"] = "image_to_query_results"
                         root = infer_root(path, record)
                         image = image.strip()
                         if image not in image_to_queries:
                             image_order.append(image)
                         image_to_queries.setdefault(image, set())
+                        image_to_query_results.setdefault(image, {})
                         for query, result in query_results.items():
-                            if not isinstance(query, str) or not query.strip():
+                            if not isinstance(query, str) or not query.strip() or not isinstance(result, dict):
                                 continue
-                            if isinstance(result, dict) and result.get("is_present") is True:
-                                image_to_queries.setdefault(image, set()).add(query.strip())
+                            clean_query = query.strip()
+                            image_to_query_results[image][clean_query] = result
+                            if result.get("is_present") is True:
+                                image_to_queries.setdefault(image, set()).add(clean_query)
                         if root and image not in image_to_root:
                             image_to_root[image] = root
                         continue
@@ -121,7 +125,7 @@ def load_image_query_map(path: Path):
         image: sorted(queries)
         for image, queries in image_to_queries.items()
     }
-    return image_to_queries, image_to_root, meta, image_order
+    return image_to_queries, image_to_query_results, image_to_root, meta, image_order
 
 
 @st.cache_data(show_spinner=False)
@@ -130,7 +134,7 @@ def cached_load(path_str: str):
 
 
 @st.cache_data(show_spinner=False)
-def cached_load_v2(path_str: str):
+def cached_load_v3(path_str: str):
     return load_image_query_map(Path(path_str))
 
 
@@ -148,6 +152,29 @@ def render_query_block(title: str, queries: list[str]):
         st.code("\n".join(queries), language="text")
     else:
         st.caption("empty")
+
+
+def render_query_results_block(title: str, query_results: dict[str, dict]):
+    st.markdown(f"#### {title}")
+    st.write(f"{len(query_results)} queries")
+    if not query_results:
+        st.caption("empty")
+        return
+
+    lines = []
+    for idx, (query, result) in enumerate(query_results.items(), start=1):
+        lines.append(f"[{idx}] {query}")
+        lines.append(
+            "  is_present={} | is_main_subject={} | importance_score={} | location={}".format(
+                result.get("is_present"),
+                result.get("is_main_subject"),
+                result.get("importance_score"),
+                result.get("location", ""),
+            )
+        )
+        lines.append(f"  analysis: {result.get('analysis', '')}")
+        lines.append("")
+    st.code("\n".join(lines).rstrip(), language="text")
 
 
 
@@ -215,16 +242,17 @@ new_labels = st.multiselect(
 )
 
 old_path = Path(old_options[old_label])
-old_map, old_roots, old_meta, old_image_order = cached_load_v2(str(old_path))
+old_map, old_query_results_map, old_roots, old_meta, old_image_order = cached_load_v3(str(old_path))
 
 new_data = []
 for label in new_labels:
     path = Path(new_options[label])
-    new_map, new_roots, new_meta, new_image_order = cached_load_v2(str(path))
+    new_map, new_query_results_map, new_roots, new_meta, new_image_order = cached_load_v3(str(path))
     new_data.append({
         "label": label,
         "path": path,
         "map": new_map,
+        "query_results_map": new_query_results_map,
         "roots": new_roots,
         "meta": new_meta,
         "image_order": new_image_order,
@@ -383,8 +411,9 @@ with top_cols[1]:
     render_query_block(f"Old: {old_label}", old_queries)
     for item in new_data:
         st.divider()
-        present_in_new = image_id in item["map"]
+        present_in_new = image_id in item["map"] or image_id in item["query_results_map"]
         new_queries = item["map"].get(image_id, [])
+        new_query_results = item["query_results_map"].get(image_id, {})
         old_set = set(old_queries)
         new_set = set(new_queries)
         if present_in_new:
@@ -396,7 +425,10 @@ with top_cols[1]:
             add = []
             delete = []
 
-        render_query_block(f"New: {item['label']}", new_queries)
+        if new_query_results:
+            render_query_results_block(f"New: {item['label']}", new_query_results)
+        else:
+            render_query_block(f"New: {item['label']}", new_queries)
         diff_cols = st.columns([1, 1, 1])
         with diff_cols[0]:
             render_query_block("Keep", keep)
