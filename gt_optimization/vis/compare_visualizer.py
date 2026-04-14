@@ -111,6 +111,11 @@ def cached_load(path_str: str):
     return load_image_query_map(Path(path_str))
 
 
+@st.cache_data(show_spinner=False)
+def cached_load_v2(path_str: str):
+    return load_image_query_map(Path(path_str))
+
+
 def path_label(path: Path) -> str:
     try:
         return str(path.relative_to(WORKSPACE_DIR))
@@ -192,12 +197,12 @@ new_labels = st.multiselect(
 )
 
 old_path = Path(old_options[old_label])
-old_map, old_roots, old_meta, old_image_order = cached_load(str(old_path))
+old_map, old_roots, old_meta, old_image_order = cached_load_v2(str(old_path))
 
 new_data = []
 for label in new_labels:
     path = Path(new_options[label])
-    new_map, new_roots, new_meta, new_image_order = cached_load(str(path))
+    new_map, new_roots, new_meta, new_image_order = cached_load_v2(str(path))
     new_data.append({
         "label": label,
         "path": path,
