@@ -1,0 +1,38 @@
+input:
+  input_type: jsonl
+  jsonl_path: ../gt_optimization/gt/card_step2_candidates_merged.jsonl
+
+prompt:
+  dir_prompts: ./prompts/gt_fix
+  prompt_type: card_step2_122b
+  prompt_key: prompt_card_step2
+
+model:
+  backend: openai
+  api_url: http://localhost:8000/v1
+  api_key: EMPTY
+  model_name: qwen3.5-122b-a10b
+  model_tag: qwen35_122b_a10b
+  temperature: 0.0
+  top_p: 1.0
+  presence_penalty: 0.0
+  extra_body:
+    chat_template_kwargs:
+      enable_thinking: false
+    top_k: -1
+
+task_processor:
+  task_processor_module: ./module_task_processor/processors/gt_fix/card_step2_flow_processor.py
+  task_processor_name: CardStep2FlowProcessor
+
+runtime:
+  max_concurrent: 8
+  log_every: 10
+  max_retry: 3
+  do_sample: false
+
+output:
+  output_dir: outputs/gt_fix/card_step2_flow_122b
+
+extra:
+  query_batch_size: 10
