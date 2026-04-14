@@ -439,4 +439,6 @@ with top_cols[1]:
         if present_in_new:
             st.caption("状态：new 中存在该图片")
         else:
-            st.warning("状态：new 中不存在该图片，可能还没处理到，或者处理失败")
+            st.warning(
+                f"状态：new 中不存在该图片，可能还没处理到，或者处理失败。图片路径：{image_path}"
+            )
