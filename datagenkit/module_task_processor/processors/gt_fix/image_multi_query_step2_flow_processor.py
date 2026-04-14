@@ -211,8 +211,8 @@ class ImageMultiQueryStep2FlowProcessor(FlowTaskProcessor):
                 importance_score = int(importance_score)
             except Exception:
                 return False, f"query={query} 的 importance_score 必须是整数", None
-            if importance_score < 0 or importance_score > 3:
-                return False, f"query={query} 的 importance_score 必须在 0-3 之间", None
+            if importance_score < 0 or importance_score > 10:
+                return False, f"query={query} 的 importance_score 必须在 0-10 之间", None
 
             if not is_present:
                 if is_main_subject:
