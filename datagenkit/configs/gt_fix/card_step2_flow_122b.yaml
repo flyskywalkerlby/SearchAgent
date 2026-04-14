@@ -1,6 +1,6 @@
 input:
   input_type: jsonl
-  jsonl_path: ../gt_optimization/gt/card_step2_candidates_merged.jsonl
+  jsonl_path: ./outputs/gt_fix/card_step2_candidates_merged.jsonl
 
 prompt:
   dir_prompts: ./prompts/gt_fix
