@@ -135,6 +135,10 @@ def parse_output_record(path: Path, record: dict, view_data) -> bool:
         return True
 
     query_results = output.get("query_results")
+    if not isinstance(query_results, dict):
+        legacy_results = output.get("results")
+        if isinstance(legacy_results, dict):
+            query_results = legacy_results
     if isinstance(query_results, dict):
         view_data["meta"]["kind"] = "image_to_query_results"
         register_image(view_data, image, root)

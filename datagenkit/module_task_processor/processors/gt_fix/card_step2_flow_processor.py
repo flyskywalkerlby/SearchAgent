@@ -86,7 +86,13 @@ class CardStep2FlowProcessor(FlowTaskProcessor):
         outputs: dict,
         current_output=None,
     ):
-        if current_output is not None:
+        if isinstance(current_output, dict):
+            if isinstance(current_output.get("query_results"), dict):
+                return current_output
+            if isinstance(current_output.get("results"), dict):
+                return {
+                    "query_results": current_output["results"],
+                }
             return current_output
         step2_output = (outputs or {}).get("step2")
         if isinstance(step2_output, dict):
