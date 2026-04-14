@@ -90,8 +90,26 @@ def load_image_query_map(path: Path):
                         image = image.strip()
                         if image not in image_to_queries:
                             image_order.append(image)
+                        image_to_queries.setdefault(image, set())
                         for query in matched_queries:
                             if isinstance(query, str) and query.strip():
+                                image_to_queries.setdefault(image, set()).add(query.strip())
+                        if root and image not in image_to_root:
+                            image_to_root[image] = root
+                        continue
+
+                    query_results = output.get("query_results")
+                    if isinstance(image, str) and isinstance(query_results, dict):
+                        meta["kind"] = "image_to_queries"
+                        root = infer_root(path, record)
+                        image = image.strip()
+                        if image not in image_to_queries:
+                            image_order.append(image)
+                        image_to_queries.setdefault(image, set())
+                        for query, result in query_results.items():
+                            if not isinstance(query, str) or not query.strip():
+                                continue
+                            if isinstance(result, dict) and result.get("is_present") is True:
                                 image_to_queries.setdefault(image, set()).add(query.strip())
                         if root and image not in image_to_root:
                             image_to_root[image] = root
