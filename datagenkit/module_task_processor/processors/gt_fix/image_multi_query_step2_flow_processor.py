@@ -240,6 +240,13 @@ class ImageMultiQueryStep2FlowProcessor(FlowTaskProcessor):
         return True, None, checked
 
     def consume_step_result(self, flow_ctx, step_info, checked_output, raw_text, data, runtime):
-        flow_ctx["outputs"].setdefault("split_query_batch", []).append(checked_output)
+        merged_output = flow_ctx["outputs"].setdefault(
+            "split_query_batch",
+            {"reason": "", "results": {}},
+        )
+        if checked_output.get("reason"):
+            merged_output["reason"] = checked_output["reason"]
+        merged_output.setdefault("results", {}).update(checked_output["results"])
+
         flow_ctx["runtime"]["query_results"].update(checked_output["results"])
         flow_ctx["runtime"]["batch_idx"] += 1
