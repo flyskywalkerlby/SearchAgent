@@ -47,6 +47,7 @@ def infer_root(path: Path, record: dict) -> str:
 def load_image_query_map(path: Path):
     image_to_queries = {}
     image_to_root = {}
+    image_order = []
     meta = {"records": 0, "skipped": 0, "kind": "unknown"}
 
     with path.open("r", encoding="utf-8") as f:
@@ -71,6 +72,8 @@ def load_image_query_map(path: Path):
                         if not isinstance(image, str) or not image.strip():
                             continue
                         image = image.strip()
+                        if image not in image_to_queries:
+                            image_order.append(image)
                         image_to_queries.setdefault(image, set()).add(query)
                         if root and image not in image_to_root:
                             image_to_root[image] = root
@@ -85,6 +88,8 @@ def load_image_query_map(path: Path):
                         meta["kind"] = "image_to_queries"
                         root = infer_root(path, record)
                         image = image.strip()
+                        if image not in image_to_queries:
+                            image_order.append(image)
                         for query in matched_queries:
                             if isinstance(query, str) and query.strip():
                                 image_to_queries.setdefault(image, set()).add(query.strip())
@@ -98,7 +103,7 @@ def load_image_query_map(path: Path):
         image: sorted(queries)
         for image, queries in image_to_queries.items()
     }
-    return image_to_queries, image_to_root, meta
+    return image_to_queries, image_to_root, meta, image_order
 
 
 @st.cache_data(show_spinner=False)
@@ -187,25 +192,26 @@ new_labels = st.multiselect(
 )
 
 old_path = Path(old_options[old_label])
-old_map, old_roots, old_meta = cached_load(str(old_path))
+old_map, old_roots, old_meta, old_image_order = cached_load(str(old_path))
 
 new_data = []
 for label in new_labels:
     path = Path(new_options[label])
-    new_map, new_roots, new_meta = cached_load(str(path))
+    new_map, new_roots, new_meta, new_image_order = cached_load(str(path))
     new_data.append({
         "label": label,
         "path": path,
         "map": new_map,
         "roots": new_roots,
         "meta": new_meta,
+        "image_order": new_image_order,
     })
 
 show_only_diff = st.checkbox("Only show images with diffs", value=False)
 show_overall_results = st.checkbox("Show overall results", value=False)
 image_filter = st.text_input("Filter image id contains", value="").strip().lower()
 
-image_ids = sorted(old_map.keys())
+image_ids = list(old_image_order)
 
 if image_filter:
     image_ids = [image for image in image_ids if image_filter in image.lower()]
