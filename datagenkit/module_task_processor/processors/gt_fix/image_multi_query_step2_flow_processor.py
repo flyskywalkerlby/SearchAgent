@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
 import colorful as cf
 
@@ -61,48 +60,46 @@ class ImageMultiQueryStep2FlowProcessor(FlowTaskProcessor):
     def __init__(self, cfg):
         super().__init__(cfg)
         self.extra_cfg = cfg.get("extra", {}) or {}
-        self.query_list = self._load_query_list()
         self.query_batch_size = int(self.extra_cfg.get("query_batch_size", cfg.get("query_batch_size", 20)) or 20)
         if self.query_batch_size <= 0:
             raise ValueError("query_batch_size 必须大于 0")
 
-    def _load_query_list(self) -> list[str]:
-        raw_paths = self.extra_cfg.get("query_jsonl_paths", self.cfg.get("query_jsonl_paths"))
-        if isinstance(raw_paths, str):
-            raw_paths = [raw_paths]
-        if not isinstance(raw_paths, list) or not raw_paths:
-            raise ValueError("query_jsonl_paths 必须是非空列表")
+    def _load_queries_from_sample(self, data) -> list[str]:
+        output = data.get("output") if isinstance(data, dict) else None
+        if not isinstance(output, dict):
+            raise ValueError("step2 输入样本缺少 output dict")
 
-        queries = []
-        seen = set()
-        for raw_path in raw_paths:
-            path = Path(raw_path).expanduser().resolve()
-            if not path.exists():
-                raise FileNotFoundError(f"query jsonl 不存在: {path}")
-            with path.open("r", encoding="utf-8") as f:
-                for line_no, line in enumerate(f, start=1):
-                    line = line.strip()
-                    if not line:
-                        continue
-                    obj = json.loads(line)
-                    if not isinstance(obj, dict) or len(obj) != 1:
-                        raise ValueError(f"{path}:{line_no} 需要是单 key dict")
-                    query = next(iter(obj.keys())).strip()
-                    if not query or query in seen:
-                        continue
-                    seen.add(query)
-                    queries.append(query)
+        matched_queries = output.get("matched_queries")
+        if isinstance(matched_queries, list):
+            queries = []
+            seen = set()
+            for query in matched_queries:
+                if not isinstance(query, str):
+                    continue
+                query = query.strip()
+                if not query or query in seen:
+                    continue
+                seen.add(query)
+                queries.append(query)
+            return queries
 
-        if not queries:
-            raise ValueError("没有加载到任何 query")
-        return queries
+        query_results = output.get("query_results")
+        if isinstance(query_results, dict):
+            queries = []
+            for query in query_results.keys():
+                if isinstance(query, str) and query.strip():
+                    queries.append(query.strip())
+            return queries
+
+        raise ValueError("step2 输入样本缺少 matched_queries 或 query_results")
 
     def get_max_step_count(self) -> int | None:
         return 1
 
     def init_flow_ctx(self, img_path, data, runtime):
         flow_ctx = super().init_flow_ctx(img_path, data, runtime)
-        flow_ctx["runtime"]["query_batches"] = _chunk_list(self.query_list, self.query_batch_size)
+        query_list = self._load_queries_from_sample(data)
+        flow_ctx["runtime"]["query_batches"] = _chunk_list(query_list, self.query_batch_size)
         flow_ctx["runtime"]["batch_idx"] = 0
         flow_ctx["runtime"]["query_results"] = {}
         return flow_ctx

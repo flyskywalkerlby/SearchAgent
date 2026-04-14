@@ -35,6 +35,4 @@ output:
   output_dir: outputs/gt_fix/test_imgs_image_multi_query_step2_122b
 
 extra:
-  query_jsonl_paths:
-    - ../gt_optimization/gt/test_imgs_rename_20251209_q2i_supplement_removelowSim_0.2.jsonl
   query_batch_size: 20
