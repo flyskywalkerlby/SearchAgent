@@ -81,6 +81,22 @@ class CardStep2FlowProcessor(FlowTaskProcessor):
     def get_max_step_count(self) -> int | None:
         return 2
 
+    def rebuild_final_output_from_outputs(
+        self,
+        outputs: dict,
+        current_output=None,
+    ):
+        if current_output is not None:
+            return current_output
+        step2_output = (outputs or {}).get("step2")
+        if isinstance(step2_output, dict):
+            results = step2_output.get("results")
+            if isinstance(results, dict):
+                return {
+                    "query_results": results,
+                }
+        return super().rebuild_final_output_from_outputs(outputs, current_output)
+
     def _load_candidate_queries_from_sample(self, data) -> list[str]:
         candidate_queries = data.get("candidate_queries")
         if isinstance(candidate_queries, list):

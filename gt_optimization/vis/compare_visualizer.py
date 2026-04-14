@@ -120,7 +120,7 @@ def parse_output_record(path: Path, record: dict, view_data) -> bool:
         return False
 
     root = infer_root(path, record)
-    image = output.get("image")
+    image = output.get("image") or record.get("image")
     if not isinstance(image, str) or not image.strip():
         return False
     image = normalize_image_key(image, root)
