@@ -401,7 +401,7 @@ st.markdown(f"### Image: {image_id}")
 top_cols = st.columns([1.1, 1.4])
 with top_cols[0]:
     if image_root and os.path.exists(image_path):
-        st.image(image_path, caption=image_id, use_container_width=True)
+        st.image(image_path, caption=image_id, width="stretch")
     else:
         st.error(f"❌ {image_id}")
         if image_root:

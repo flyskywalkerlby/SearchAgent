@@ -124,6 +124,6 @@ if selected_file:
         img_path = os.path.join(base_dir, img_name)
         with cols[i % 4]:
             if os.path.exists(img_path):
-                st.image(img_path, caption=img_name, use_container_width=True)
+                st.image(img_path, caption=img_name, width="stretch")
             else:
                 st.error(f"❌ {img_name}")
