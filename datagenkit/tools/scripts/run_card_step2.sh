@@ -2,9 +2,9 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+DATAGENKIT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
-cd "$REPO_ROOT/datagenkit"
+cd "$DATAGENKIT_DIR"
 
 python ./tools/merge_card_step2_inputs.py \
   --old-jsonl ../gt_optimization/gt/card_20251218_q2i_manucheck.jsonl \
