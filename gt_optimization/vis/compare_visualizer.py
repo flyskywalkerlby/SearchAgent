@@ -57,100 +57,147 @@ def normalize_image_key(image: str, root: str = "") -> str:
     return image
 
 
-def load_image_query_map(path: Path):
-    image_to_queries = {}
-    image_to_query_results = {}
-    image_to_root = {}
-    image_order = []
-    present_images = set()
-    meta = {"records": 0, "skipped": 0, "kind": "unknown"}
+def init_view_data():
+    return {
+        "image_map": {},
+        "queries_by_image": {},
+        "query_results_by_image": {},
+        "roots": {},
+        "image_order": [],
+        "meta": {"records": 0, "skipped": 0, "kind": "unknown"},
+    }
+
+
+def register_image(view_data, image: str, root: str):
+    if image not in view_data["image_map"]:
+        view_data["image_order"].append(image)
+    view_data["image_map"][image] = True
+    view_data["queries_by_image"].setdefault(image, set())
+    if root and image not in view_data["roots"]:
+        view_data["roots"][image] = root
+
+
+def add_queries(view_data, image: str, queries):
+    if not isinstance(queries, list):
+        return
+    for query in queries:
+        if isinstance(query, str) and query.strip():
+            view_data["queries_by_image"][image].add(query.strip())
+
+
+def pick_top_level_queries(record: dict):
+    for key in ("candidate_queries", "new_queries", "old_queries"):
+        value = record.get(key)
+        if isinstance(value, list):
+            return value
+    return []
+
+
+def parse_gt_record(path: Path, record: dict, view_data) -> bool:
+    if not (isinstance(record, dict) and len(record) == 1):
+        return False
+
+    query, images = next(iter(record.items()))
+    if not isinstance(query, str) or not isinstance(images, list):
+        return False
+
+    root = infer_root(path, record)
+    view_data["meta"]["kind"] = "query_to_images"
+    for image in images:
+        if not isinstance(image, str) or not image.strip():
+            continue
+        image = normalize_image_key(image, root)
+        if not image:
+            continue
+        register_image(view_data, image, root)
+        view_data["queries_by_image"][image].add(query.strip())
+    return True
+
+
+def parse_output_record(path: Path, record: dict, view_data) -> bool:
+    output = record.get("output")
+    if not isinstance(output, dict):
+        return False
+
+    root = infer_root(path, record)
+    image = output.get("image")
+    if not isinstance(image, str) or not image.strip():
+        return False
+    image = normalize_image_key(image, root)
+    if not image:
+        return False
+
+    matched_queries = output.get("matched_queries")
+    if isinstance(matched_queries, list):
+        view_data["meta"]["kind"] = "image_to_queries"
+        register_image(view_data, image, root)
+        add_queries(view_data, image, matched_queries)
+        return True
+
+    query_results = output.get("query_results")
+    if isinstance(query_results, dict):
+        view_data["meta"]["kind"] = "image_to_query_results"
+        register_image(view_data, image, root)
+        view_data["query_results_by_image"].setdefault(image, {})
+        for query, result in query_results.items():
+            if not isinstance(query, str) or not query.strip() or not isinstance(result, dict):
+                continue
+            clean_query = query.strip()
+            view_data["query_results_by_image"][image][clean_query] = result
+            if result.get("is_present") is True:
+                view_data["queries_by_image"][image].add(clean_query)
+        return True
+
+    return False
+
+
+def parse_top_level_image_record(path: Path, record: dict, view_data) -> bool:
+    image = record.get("image")
+    if not isinstance(image, str) or not image.strip():
+        return False
+
+    root = infer_root(path, record)
+    image = normalize_image_key(image, root)
+    if not image:
+        return False
+
+    if view_data["meta"]["kind"] == "unknown":
+        view_data["meta"]["kind"] = "image_records"
+    register_image(view_data, image, root)
+    add_queries(view_data, image, pick_top_level_queries(record))
+    return True
+
+
+def load_compare_data(path: Path):
+    view_data = init_view_data()
 
     with path.open("r", encoding="utf-8") as f:
-        for line_no, line in enumerate(f, start=1):
+        for line in f:
             line = line.strip()
             if not line:
                 continue
-            meta["records"] += 1
+            view_data["meta"]["records"] += 1
 
             try:
                 record = json.loads(line)
             except json.JSONDecodeError:
-                meta["skipped"] += 1
+                view_data["meta"]["skipped"] += 1
                 continue
 
-            if isinstance(record, dict) and len(record) == 1:
-                query, images = next(iter(record.items()))
-                if isinstance(query, str) and isinstance(images, list):
-                    meta["kind"] = "query_to_images"
-                    root = infer_root(path, record)
-                    for image in images:
-                        if not isinstance(image, str) or not image.strip():
-                            continue
-                        image = normalize_image_key(image, root)
-                        if not image:
-                            continue
-                        if image not in image_to_queries:
-                            image_order.append(image)
-                        present_images.add(image)
-                        image_to_queries.setdefault(image, set()).add(query)
-                        if root and image not in image_to_root:
-                            image_to_root[image] = root
-                    continue
+            if parse_gt_record(path, record, view_data):
+                continue
+            if parse_output_record(path, record, view_data):
+                continue
+            if parse_top_level_image_record(path, record, view_data):
+                continue
 
-            if isinstance(record, dict):
-                output = record.get("output")
-                if isinstance(output, dict):
-                    image = output.get("image")
-                    matched_queries = output.get("matched_queries")
-                    if isinstance(image, str) and isinstance(matched_queries, list):
-                        meta["kind"] = "image_to_queries"
-                        root = infer_root(path, record)
-                        image = normalize_image_key(image, root)
-                        if not image:
-                            meta["skipped"] += 1
-                            continue
-                        if image not in image_to_queries:
-                            image_order.append(image)
-                        present_images.add(image)
-                        image_to_queries.setdefault(image, set())
-                        for query in matched_queries:
-                            if isinstance(query, str) and query.strip():
-                                image_to_queries.setdefault(image, set()).add(query.strip())
-                        if root and image not in image_to_root:
-                            image_to_root[image] = root
-                        continue
+            view_data["meta"]["skipped"] += 1
 
-                    query_results = output.get("query_results")
-                    if isinstance(image, str) and isinstance(query_results, dict):
-                        meta["kind"] = "image_to_query_results"
-                        root = infer_root(path, record)
-                        image = normalize_image_key(image, root)
-                        if not image:
-                            meta["skipped"] += 1
-                            continue
-                        if image not in image_to_queries:
-                            image_order.append(image)
-                        present_images.add(image)
-                        image_to_queries.setdefault(image, set())
-                        image_to_query_results.setdefault(image, {})
-                        for query, result in query_results.items():
-                            if not isinstance(query, str) or not query.strip() or not isinstance(result, dict):
-                                continue
-                            clean_query = query.strip()
-                            image_to_query_results[image][clean_query] = result
-                            if result.get("is_present") is True:
-                                image_to_queries.setdefault(image, set()).add(clean_query)
-                        if root and image not in image_to_root:
-                            image_to_root[image] = root
-                        continue
-
-            meta["skipped"] += 1
-
-    image_to_queries = {
+    view_data["queries_by_image"] = {
         image: sorted(queries)
-        for image, queries in image_to_queries.items()
+        for image, queries in view_data["queries_by_image"].items()
     }
-    return image_to_queries, image_to_query_results, image_to_root, meta, image_order, present_images
+    return view_data
 
 def path_label(path: Path) -> str:
     try:
@@ -256,28 +303,21 @@ new_labels = st.multiselect(
 )
 
 old_path = Path(old_options[old_label])
-old_map, old_query_results_map, old_roots, old_meta, old_image_order, old_present_images = load_image_query_map(old_path)
+old_data = load_compare_data(old_path)
 
 new_data = []
 for label in new_labels:
     path = Path(new_options[label])
-    new_map, new_query_results_map, new_roots, new_meta, new_image_order, new_present_images = load_image_query_map(path)
-    new_data.append({
-        "label": label,
-        "path": path,
-        "map": new_map,
-        "query_results_map": new_query_results_map,
-        "roots": new_roots,
-        "meta": new_meta,
-        "image_order": new_image_order,
-        "present_images": new_present_images,
-    })
+    data = load_compare_data(path)
+    data["label"] = label
+    data["path"] = path
+    new_data.append(data)
 
 show_only_diff = st.checkbox("Only show images with diffs", value=False)
 show_overall_results = st.checkbox("Show overall results", value=False)
 image_filter = st.text_input("Filter image id contains", value="").strip().lower()
 
-image_ids = list(old_image_order)
+image_ids = list(old_data["image_order"])
 
 if image_filter:
     image_ids = [image for image in image_ids if image_filter in image.lower()]
@@ -285,10 +325,10 @@ if image_filter:
 if show_only_diff and new_data:
     filtered = []
     for image in image_ids:
-        old_queries = set(old_map.get(image, []))
+        old_queries = set(old_data["queries_by_image"].get(image, []))
         keep_any_diff = False
         for item in new_data:
-            new_queries = set(item["map"].get(image, []))
+            new_queries = set(item["queries_by_image"].get(image, []))
             if old_queries != new_queries:
                 keep_any_diff = True
                 break
@@ -297,22 +337,27 @@ if show_only_diff and new_data:
     image_ids = filtered
 
 st.caption(
-    f"Old images: {len(old_map)} | "
+    f"Old images: {len(old_data['image_map'])} | "
     f"Visible images: {len(image_ids)} | "
-    f"Old records: {old_meta['records']} | skipped: {old_meta['skipped']}"
+    f"Old records: {old_data['meta']['records']} | skipped: {old_data['meta']['skipped']}"
 )
 
 for item in new_data:
-    common = len(set(old_map.keys()) & set(item["present_images"]))
+    common = len(set(old_data["image_map"].keys()) & set(item["image_map"].keys()))
     st.caption(
-        f"New: {item['label']} | images: {len(item['present_images'])} | "
+        f"New: {item['label']} | images: {len(item['image_map'])} | "
         f"common_with_old: {common} | skipped: {item['meta']['skipped']}"
     )
 
 if show_overall_results and new_data:
     st.markdown("### Overall Results")
     for item in new_data:
-        stats = compute_diff_stats(old_map, item["map"], item["present_images"], image_ids)
+        stats = compute_diff_stats(
+            old_data["queries_by_image"],
+            item["queries_by_image"],
+            item["image_map"].keys(),
+            image_ids,
+        )
         st.markdown(f"#### New: {item['label']}")
         cols = st.columns(10)
         labels = [
@@ -407,8 +452,8 @@ with nav_cols[4]:
     st.button("Next ▶", on_click=next_item)
 
 image_id = image_ids[st.session_state.compare_idx]
-old_queries = old_map.get(image_id, [])
-image_root = old_roots.get(image_id, "")
+old_queries = old_data["queries_by_image"].get(image_id, [])
+image_root = old_data["roots"].get(image_id, "")
 image_path = os.path.join(image_root, image_id) if image_root else image_id
 
 st.markdown(f"### Image: {image_id}")
@@ -426,9 +471,9 @@ with top_cols[1]:
     render_query_block(f"Old: {old_label}", old_queries)
     for item in new_data:
         st.divider()
-        present_in_new = image_id in item["present_images"]
-        new_queries = item["map"].get(image_id, [])
-        new_query_results = item["query_results_map"].get(image_id, {})
+        present_in_new = image_id in item["image_map"]
+        new_queries = item["queries_by_image"].get(image_id, [])
+        new_query_results = item["query_results_by_image"].get(image_id, {})
         old_set = set(old_queries)
         new_set = set(new_queries)
         if present_in_new:
