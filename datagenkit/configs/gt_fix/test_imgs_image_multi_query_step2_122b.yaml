@@ -35,4 +35,4 @@ output:
   output_dir: outputs/gt_fix/test_imgs_image_multi_query_step2_122b
 
 extra:
-  query_batch_size: 20
+  query_batch_size: 10
