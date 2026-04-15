@@ -1,129 +1,279 @@
-import streamlit as st
 import json
 import os
+from pathlib import Path
+
+import streamlit as st
+
 
 st.set_page_config(layout="wide")
 
-ROOT_BY_JSONL = {
-    "card_20251218_q2i_manucheck.jsonl": "/srv/workspace/Kirin_AI_Workspace/AIC_I/g30064845/VLM/Chinese-CLIP/datasets/from_tuku_test_3k_together/card",
-    "test_imgs_rename_20251209_q2i_supplement_removelowSim_0.2.jsonl": "/srv/workspace/Kirin_AI_Workspace/TMG_II/s00913809/projects/multi-modal/data/image-caption/test/caption_1k/test_imgs_rename",
-}
-GT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "gt")
+WORKSPACE_DIR = Path(__file__).resolve().parents[2]
+GT_OPT_DIR = WORKSPACE_DIR / "gt_optimization"
+RAW_DIR = GT_OPT_DIR / "gt_raw"
+REFINE_DIRS = sorted(
+    [
+        p for p in GT_OPT_DIR.iterdir()
+        if p.is_dir() and p.name.startswith("gt_refine")
+    ],
+    key=lambda p: p.name,
+)
+DATA_DIRS = [RAW_DIR, *REFINE_DIRS]
 
-st.title("JSONL Visualizer")
+
+st.title("GT Visualizer")
 
 
-def load_jsonl(file_path):
-    data = []
-    with open(file_path, "r", encoding="utf-8") as f:
+def collect_files(mode: str):
+    suffix = "_query2images.jsonl" if mode == "query2" else "_image2queries.jsonl"
+    files = []
+    for root_dir in DATA_DIRS:
+        if not root_dir.exists():
+            continue
+        for path in sorted(root_dir.glob(f"*{suffix}")):
+            files.append(path)
+    return files
+
+
+def path_label(path: Path) -> str:
+    try:
+        return str(path.relative_to(WORKSPACE_DIR))
+    except ValueError:
+        return str(path)
+
+
+def load_query2_file(path: Path):
+    query_order = []
+    query_map = {}
+    with path.open("r", encoding="utf-8") as f:
         for line in f:
             line = line.strip()
-            if line:
-                data.append(json.loads(line))
-    return data
+            if not line:
+                continue
+            record = json.loads(line)
+            query = record.get("query")
+            items = record.get("items")
+            if not isinstance(query, str) or not isinstance(items, list):
+                continue
+            query_order.append(query)
+            query_map[query] = items
+    return {"order": query_order, "map": query_map}
+
+
+def load_image2_file(path: Path):
+    image_order = []
+    image_map = {}
+    with path.open("r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            record = json.loads(line)
+            image = record.get("image")
+            root = record.get("root", "")
+            queries = record.get("queries")
+            if not isinstance(image, str) or not isinstance(queries, dict):
+                continue
+            image_order.append(image)
+            image_map[image] = {
+                "root": root,
+                "queries": queries,
+            }
+    return {"order": image_order, "map": image_map}
+
+
+def build_item_caption(item: dict) -> str:
+    image = str(item.get("image", "") or "")
+    extras = []
+    if item.get("is_main_subject") is True:
+        extras.append("main")
+    score = item.get("importance_score")
+    if score is not None:
+        extras.append(f"score={score}")
+    if extras:
+        return f"{image} | {' | '.join(extras)}"
+    return image
+
+
+def render_query2_block(title: str, items: list[dict]):
+    st.markdown(f"#### {title}")
+    st.write(f"{len(items)} images")
+    if not items:
+        st.caption("empty")
+        return
+
+    cols = st.columns(4)
+    for idx, item in enumerate(items):
+        image = str(item.get("image", "") or "")
+        root = str(item.get("root", "") or "")
+        image_path = os.path.join(root, image) if root else image
+        with cols[idx % 4]:
+            if root and os.path.exists(image_path):
+                st.image(image_path, caption=build_item_caption(item), width="stretch")
+            else:
+                st.error(f"❌ {image}")
+                if root:
+                    st.caption(root)
+
+
+def render_image2_block(title: str, queries: dict):
+    st.markdown(f"#### {title}")
+    st.write(f"{len(queries)} queries")
+    if not queries:
+        st.caption("empty")
+        return
+
+    lines = []
+    for idx, (query, info) in enumerate(sorted(queries.items(), key=lambda x: x[0]), start=1):
+        info = info if isinstance(info, dict) else {}
+        lines.append(f"[{idx}] {query}")
+        lines.append(
+            "  is_main_subject={} | importance_score={} | location={}".format(
+                info.get("is_main_subject"),
+                info.get("importance_score"),
+                info.get("location", ""),
+            )
+        )
+        analysis = str(info.get("analysis", "") or "")
+        if analysis:
+            lines.append(f"  analysis: {analysis}")
+        lines.append("")
+    st.code("\n".join(lines).rstrip(), language="text")
+
+
+mode = st.selectbox("Mode", ["query2", "image2"])
+all_files = collect_files(mode)
+options = {path_label(p): p for p in all_files}
+
+if not options:
+    st.warning("没有找到可用文件")
+    st.stop()
+
+selected_labels = st.multiselect("Files", list(options.keys()))
+if not selected_labels:
+    st.info("请选择至少一个文件")
+    st.stop()
+
+selected_paths = [options[label] for label in selected_labels]
+selected_data = []
+for label, path in zip(selected_labels, selected_paths):
+    data = load_query2_file(path) if mode == "query2" else load_image2_file(path)
+    data["label"] = label
+    selected_data.append(data)
+
+anchor = selected_data[0]
+filter_text = st.text_input("Filter contains", value="").strip().lower()
+item_ids = list(anchor["order"])
+if filter_text:
+    item_ids = [x for x in item_ids if filter_text in x.lower()]
+
+if not item_ids:
+    st.warning("没有可展示的数据")
+    st.stop()
+
+state_key = (mode, tuple(selected_labels), filter_text)
+if "visual_idx" not in st.session_state:
+    st.session_state.visual_idx = 0
+if "visual_num_idx" not in st.session_state:
+    st.session_state.visual_num_idx = 0
+if "visual_slider_idx" not in st.session_state:
+    st.session_state.visual_slider_idx = 0
+if "visual_last_state" not in st.session_state:
+    st.session_state.visual_last_state = None
 
 
 def sync_widgets():
-    st.session_state.num_idx = st.session_state.idx
-    st.session_state.slide_idx = st.session_state.idx
+    st.session_state.visual_num_idx = st.session_state.visual_idx
+    st.session_state.visual_slider_idx = st.session_state.visual_idx
 
 
 def set_idx_from_num():
-    st.session_state.idx = int(st.session_state.num_idx)
-    st.session_state.slide_idx = st.session_state.idx
+    st.session_state.visual_idx = int(st.session_state.visual_num_idx)
+    st.session_state.visual_slider_idx = st.session_state.visual_idx
 
 
 def set_idx_from_slider():
-    st.session_state.idx = int(st.session_state.slide_idx)
-    st.session_state.num_idx = st.session_state.idx
+    st.session_state.visual_idx = int(st.session_state.visual_slider_idx)
+    st.session_state.visual_num_idx = st.session_state.visual_idx
 
 
-jsonl_files = [f for f in os.listdir(GT_DIR) if f.endswith(".jsonl")]
-selected_file = st.selectbox("Select JSONL file", jsonl_files)
-
-if "idx" not in st.session_state:
-    st.session_state.idx = 0
-if "num_idx" not in st.session_state:
-    st.session_state.num_idx = 0
-if "slide_idx" not in st.session_state:
-    st.session_state.slide_idx = 0
-if "last_file" not in st.session_state:
-    st.session_state.last_file = None
-
-if selected_file:
-    base_dir = ROOT_BY_JSONL.get(selected_file, "")
-    file_path = os.path.join(GT_DIR, selected_file)
-    data = load_jsonl(file_path)
-    total = len(data)
-
-    if total == 0:
-        st.warning("当前文件为空")
-        st.stop()
-
-    # 切文件时重置
-    if st.session_state.last_file != selected_file:
-        st.session_state.idx = 0
-        st.session_state.last_file = selected_file
-        sync_widgets()
-
-    # 防止越界
-    st.session_state.idx = max(0, min(st.session_state.idx, total - 1))
-
-    # 每轮渲染前，把两个控件同步到 idx
+if st.session_state.visual_last_state != state_key:
+    st.session_state.visual_idx = 0
+    st.session_state.visual_last_state = state_key
     sync_widgets()
 
-    def prev_item():
-        st.session_state.idx = max(0, st.session_state.idx - 1)
-        sync_widgets()
+st.session_state.visual_idx = max(0, min(st.session_state.visual_idx, len(item_ids) - 1))
+sync_widgets()
 
-    def next_item():
-        st.session_state.idx = min(total - 1, st.session_state.idx + 1)
-        sync_widgets()
 
-    col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 1])
+def prev_item():
+    st.session_state.visual_idx = max(0, st.session_state.visual_idx - 1)
+    sync_widgets()
 
-    with col1:
-        st.button("◀ Prev", on_click=prev_item)
 
-    with col2:
-        st.number_input(
-            "Idx",
-            min_value=0,
-            max_value=total - 1,
-            step=1,
-            key="num_idx",
-            on_change=set_idx_from_num,
-        )
+def next_item():
+    st.session_state.visual_idx = min(len(item_ids) - 1, st.session_state.visual_idx + 1)
+    sync_widgets()
 
-    with col3:
-        st.slider(
-            "Slider",
-            min_value=0,
-            max_value=total - 1,
-            key="slide_idx",
-            on_change=set_idx_from_slider,
-        )
 
-    with col4:
-        st.write(f"**{st.session_state.idx + 1} / {total}**")
+nav_cols = st.columns([1, 1, 1, 1, 1])
+with nav_cols[0]:
+    st.button("◀ Prev", on_click=prev_item)
+with nav_cols[1]:
+    st.number_input(
+        "Idx",
+        min_value=0,
+        max_value=len(item_ids) - 1,
+        step=1,
+        key="visual_num_idx",
+        on_change=set_idx_from_num,
+    )
+with nav_cols[2]:
+    st.slider(
+        "Slider",
+        min_value=0,
+        max_value=len(item_ids) - 1,
+        key="visual_slider_idx",
+        on_change=set_idx_from_slider,
+    )
+with nav_cols[3]:
+    st.write(f"**{st.session_state.visual_idx + 1} / {len(item_ids)}**")
+with nav_cols[4]:
+    st.button("Next ▶", on_click=next_item)
 
-    with col5:
-        st.button("Next ▶", on_click=next_item)
 
-    idx = st.session_state.idx
-    item = data[idx]
+current_id = item_ids[st.session_state.visual_idx]
 
-    query = list(item.keys())[0]
-    images = item[query]
+if mode == "query2":
+    st.markdown(f"### Query: {current_id}")
+    for idx, data in enumerate(selected_data):
+        if idx > 0:
+            st.divider()
+        items = data["map"].get(current_id)
+        if items is None:
+            st.warning(f"{data['label']} 中没有这个 query")
+            continue
+        render_query2_block(data["label"], items)
+else:
+    anchor_rec = anchor["map"].get(current_id, {})
+    image_root = str(anchor_rec.get("root", "") or "")
+    image_path = os.path.join(image_root, current_id) if image_root else current_id
 
-    st.markdown(f"### Query: {query}")
-    st.markdown(f"**{len(images)} images**")
+    st.markdown(f"### Image: {current_id}")
+    top_cols = st.columns([1.1, 1.4])
+    with top_cols[0]:
+        if image_root and os.path.exists(image_path):
+            st.image(image_path, caption=current_id, width="stretch")
+        else:
+            st.error(f"❌ {current_id}")
+            if image_root:
+                st.caption(image_root)
 
-    cols = st.columns(4)
-    for i, img_name in enumerate(images):
-        img_path = os.path.join(base_dir, img_name)
-        with cols[i % 4]:
-            if os.path.exists(img_path):
-                st.image(img_path, caption=img_name, width="stretch")
-            else:
-                st.error(f"❌ {img_name}")
+    with top_cols[1]:
+        for idx, data in enumerate(selected_data):
+            if idx > 0:
+                st.divider()
+            rec = data["map"].get(current_id)
+            if rec is None:
+                st.warning(f"{data['label']} 中没有这张图")
+                continue
+            render_image2_block(data["label"], rec.get("queries", {}))
