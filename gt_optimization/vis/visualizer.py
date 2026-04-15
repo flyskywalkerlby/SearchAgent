@@ -94,19 +94,19 @@ def build_item_caption(item: dict) -> str:
     return image
 
 
-def render_query2_block(title: str, items: list[dict]):
+def render_query2_block(title: str, items: list[dict], columns_per_row: int):
     st.markdown(f"#### {title}")
     st.write(f"{len(items)} images")
     if not items:
         st.caption("empty")
         return
 
-    cols = st.columns(4)
+    cols = st.columns(columns_per_row)
     for idx, item in enumerate(items):
         image = str(item.get("image", "") or "")
         root = str(item.get("root", "") or "")
         image_path = os.path.join(root, image) if root else image
-        with cols[idx % 4]:
+        with cols[idx % columns_per_row]:
             if root and os.path.exists(image_path):
                 st.image(image_path, caption=build_item_caption(item), width="stretch")
             else:
@@ -161,7 +161,14 @@ for label, path in zip(selected_labels, selected_paths):
     selected_data.append(data)
 
 anchor = selected_data[0]
-filter_text = st.text_input("Filter contains", value="").strip().lower()
+if mode == "query2":
+    filter_text = st.text_input("Search query", value="").strip().lower()
+    columns_per_row = st.slider("每行图片数（越小图越大）", min_value=1, max_value=10, value=4, step=1)
+    image_text_ratio = 0
+else:
+    filter_text = st.text_input("Filter image", value="").strip().lower()
+    columns_per_row = 1
+    image_text_ratio = st.slider("图文比例", min_value=0, max_value=4, value=2, step=1)
 item_ids = list(anchor["order"])
 if filter_text:
     item_ids = [x for x in item_ids if filter_text in x.lower()]
@@ -252,14 +259,21 @@ if mode == "query2":
         if items is None:
             st.warning(f"{data['label']} 中没有这个 query")
             continue
-        render_query2_block(data["label"], items)
+        render_query2_block(data["label"], items, columns_per_row)
 else:
     anchor_rec = anchor["map"].get(current_id, {})
     image_root = str(anchor_rec.get("root", "") or "")
     image_path = os.path.join(image_root, current_id) if image_root else current_id
 
     st.markdown(f"### Image: {current_id}")
-    top_cols = st.columns([1.1, 1.4])
+    ratio_options = {
+        0: [1.4, 1.0],
+        1: [1.2, 1.2],
+        2: [1.0, 1.4],
+        3: [0.9, 1.7],
+        4: [0.8, 2.0],
+    }
+    top_cols = st.columns(ratio_options.get(image_text_ratio, [1.0, 1.4]))
     with top_cols[0]:
         if image_root and os.path.exists(image_path):
             st.image(image_path, caption=current_id, width="stretch")
