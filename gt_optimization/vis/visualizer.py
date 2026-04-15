@@ -161,14 +161,28 @@ for label, path in zip(selected_labels, selected_paths):
     selected_data.append(data)
 
 anchor = selected_data[0]
+query_search_key = "visual_query_search"
+image_search_key = "visual_image_search"
+query_cols_key = "visual_query_columns_per_row"
+image_ratio_key = "visual_image_text_ratio"
+
+if query_search_key not in st.session_state:
+    st.session_state[query_search_key] = ""
+if image_search_key not in st.session_state:
+    st.session_state[image_search_key] = ""
+if query_cols_key not in st.session_state:
+    st.session_state[query_cols_key] = 4
+if image_ratio_key not in st.session_state:
+    st.session_state[image_ratio_key] = 2
+
 if mode == "query2":
-    filter_text = st.text_input("Search query", value="").strip().lower()
-    columns_per_row = st.slider("每行图片数（越小图越大）", min_value=1, max_value=10, value=4, step=1)
+    filter_text = str(st.session_state.get(query_search_key, "")).strip().lower()
+    columns_per_row = int(st.session_state.get(query_cols_key, 4))
     image_text_ratio = 0
 else:
-    filter_text = st.text_input("Filter image", value="").strip().lower()
+    filter_text = str(st.session_state.get(image_search_key, "")).strip().lower()
     columns_per_row = 1
-    image_text_ratio = st.slider("图文比例", min_value=0, max_value=4, value=2, step=1)
+    image_text_ratio = int(st.session_state.get(image_ratio_key, 2))
 item_ids = list(anchor["order"])
 if filter_text:
     item_ids = [x for x in item_ids if filter_text in x.lower()]
@@ -251,7 +265,19 @@ with nav_cols[4]:
 current_id = item_ids[st.session_state.visual_idx]
 
 if mode == "query2":
-    st.markdown(f"### Query: {current_id}")
+    header_cols = st.columns([2.0, 1.5, 1.2])
+    with header_cols[0]:
+        st.markdown(f"### Query: {current_id}")
+    with header_cols[1]:
+        st.text_input("Search query", key=query_search_key)
+    with header_cols[2]:
+        columns_per_row = st.slider(
+            "每行图片数（越小图越大）",
+            min_value=1,
+            max_value=10,
+            key=query_cols_key,
+            step=1,
+        )
     for idx, data in enumerate(selected_data):
         if idx > 0:
             st.divider()
@@ -265,7 +291,13 @@ else:
     image_root = str(anchor_rec.get("root", "") or "")
     image_path = os.path.join(image_root, current_id) if image_root else current_id
 
-    st.markdown(f"### Image: {current_id}")
+    header_cols = st.columns([2.0, 1.5, 1.2])
+    with header_cols[0]:
+        st.markdown(f"### Image: {current_id}")
+    with header_cols[1]:
+        st.text_input("Search image", key=image_search_key)
+    with header_cols[2]:
+        image_text_ratio = st.slider("图文比例", min_value=0, max_value=4, key=image_ratio_key, step=1)
     ratio_options = {
         0: [1.4, 1.0],
         1: [1.2, 1.2],
